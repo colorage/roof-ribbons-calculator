@@ -1,5 +1,5 @@
-import { calculateRibbons, validateInputs } from "./geometry.js";
-import { renderSchematic } from "./visualization.js";
+import { calculateRibbons, validateInputs } from "./geometry.js?v=2";
+import { renderSchematic } from "./visualization.js?v=2";
 
 // #region agent log
 window.addEventListener("error", (event) => {
@@ -49,6 +49,7 @@ const inputs = {
 };
 
 const equalDegreeSpacing = document.getElementById("equalDegreeSpacing");
+const controlsSection = document.querySelector(".card.controls");
 
 function loadSavedInputs() {
   try {
@@ -61,7 +62,7 @@ function loadSavedInputs() {
         input.value = saved[key];
       }
     }
-    if (saved.equalDegreeSpacing != null) {
+    if (saved.equalDegreeSpacing != null && equalDegreeSpacing) {
       equalDegreeSpacing.checked = saved.equalDegreeSpacing === "true";
     }
   } catch {
@@ -74,7 +75,7 @@ function saveInputs() {
   for (const [key, input] of Object.entries(inputs)) {
     data[key] = input.value;
   }
-  data.equalDegreeSpacing = String(equalDegreeSpacing.checked);
+  data.equalDegreeSpacing = String(equalDegreeSpacing?.checked ?? false);
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -109,7 +110,7 @@ function readInputs() {
     hRise: Number(inputs.hRise.value),
     ribbonCount: Number(inputs.ribbonCount.value),
     sagRatio: Number(inputs.sagRatio.value) / 100,
-    spacingMode: equalDegreeSpacing.checked ? "degree" : "distance",
+    spacingMode: equalDegreeSpacing?.checked ? "degree" : "distance",
   };
 }
 
@@ -186,6 +187,10 @@ function update() {
   }
 
   const result = calculateRibbons(params);
+  result.spacingMode = params.spacingMode;
+  if (params.spacingMode === "degree" && result.angularStepDeg == null) {
+    result.angularStepDeg = 360 / params.ribbonCount;
+  }
   renderSummary(result);
   renderTable(result.ribbons);
   try {
@@ -235,11 +240,15 @@ function update() {
   }
 }
 
-for (const input of Object.values(inputs)) {
-  input.addEventListener("input", update);
+if (controlsSection) {
+  for (const eventName of ["input", "change"]) {
+    controlsSection.addEventListener(eventName, (event) => {
+      if (event.target.matches("input, select, textarea")) {
+        update();
+      }
+    });
+  }
 }
-
-equalDegreeSpacing.addEventListener("change", update);
 
 loadSavedInputs();
 update();
