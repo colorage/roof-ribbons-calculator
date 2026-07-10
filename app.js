@@ -48,6 +48,8 @@ const inputs = {
   sagRatio: document.getElementById("sagRatio"),
 };
 
+const equalDegreeSpacing = document.getElementById("equalDegreeSpacing");
+
 function loadSavedInputs() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -59,6 +61,9 @@ function loadSavedInputs() {
         input.value = saved[key];
       }
     }
+    if (saved.equalDegreeSpacing != null) {
+      equalDegreeSpacing.checked = saved.equalDegreeSpacing === "true";
+    }
   } catch {
     // Ignore corrupt or unavailable storage.
   }
@@ -69,6 +74,7 @@ function saveInputs() {
   for (const [key, input] of Object.entries(inputs)) {
     data[key] = input.value;
   }
+  data.equalDegreeSpacing = String(equalDegreeSpacing.checked);
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -86,6 +92,7 @@ const tableBody = document.getElementById("ribbonTableBody");
 const summaryEls = {
   perimeter: document.getElementById("summaryPerimeter"),
   spacing: document.getElementById("summarySpacing"),
+  spacingLabel: document.getElementById("summarySpacingLabel"),
   totalLength: document.getElementById("summaryTotalLength"),
   ribbonCount: document.getElementById("summaryRibbonCount"),
 };
@@ -102,6 +109,7 @@ function readInputs() {
     hRise: Number(inputs.hRise.value),
     ribbonCount: Number(inputs.ribbonCount.value),
     sagRatio: Number(inputs.sagRatio.value) / 100,
+    spacingMode: equalDegreeSpacing.checked ? "degree" : "distance",
   };
 }
 
@@ -124,7 +132,13 @@ function renderTable(ribbons) {
 
 function renderSummary(result) {
   summaryEls.perimeter.textContent = formatMeters(result.perimeter);
-  summaryEls.spacing.textContent = formatMeters(result.spacing);
+  if (result.spacingMode === "degree") {
+    summaryEls.spacingLabel.textContent = "Angular step";
+    summaryEls.spacing.textContent = `${result.angularStepDeg.toFixed(1)}°`;
+  } else {
+    summaryEls.spacingLabel.textContent = "Spacing along wall top";
+    summaryEls.spacing.textContent = formatMeters(result.spacing);
+  }
   summaryEls.totalLength.textContent = formatMeters(result.totalLength);
   summaryEls.ribbonCount.textContent = String(result.ribbonCount);
 }
@@ -224,6 +238,8 @@ function update() {
 for (const input of Object.values(inputs)) {
   input.addEventListener("input", update);
 }
+
+equalDegreeSpacing.addEventListener("change", update);
 
 loadSavedInputs();
 update();

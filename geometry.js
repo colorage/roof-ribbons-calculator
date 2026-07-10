@@ -46,14 +46,92 @@ function wallChordDistance(p1, p2) {
   return Math.hypot(p1.x - p2.x, p1.y - p2.y);
 }
 
-function calculateRibbons({ a, b, hWall, hRise, ribbonCount, sagRatio }) {
+function perimeterDistanceFromPoint(a, b, x, y) {
+  if (y === 0) return x;
+  if (x === a) return a + y;
+  if (y === b) return a + b + (a - x);
+  return 2 * a + b + (b - y);
+}
+
+function pointFromCenterAngle(a, b, angle) {
+  const cx = a / 2;
+  const cy = b / 2;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  let bestT = Infinity;
+
+  if (cos !== 0) {
+    for (const edgeX of [0, a]) {
+      const t = (edgeX - cx) / cos;
+      if (t > 0) {
+        const hitY = cy + t * sin;
+        if (hitY >= 0 && hitY <= b && t < bestT) {
+          bestT = t;
+        }
+      }
+    }
+  }
+
+  if (sin !== 0) {
+    for (const edgeY of [0, b]) {
+      const t = (edgeY - cy) / sin;
+      if (t > 0) {
+        const hitX = cx + t * cos;
+        if (hitX >= 0 && hitX <= a && t < bestT) {
+          bestT = t;
+        }
+      }
+    }
+  }
+
+  const x = cx + bestT * cos;
+  const y = cy + bestT * sin;
+  return pointOnPerimeter(a, b, perimeterDistanceFromPoint(a, b, x, y));
+}
+
+function calculateRibbonPositions(a, b, ribbonCount, spacingMode) {
+  if (spacingMode === "degree") {
+    const startAngle = -Math.PI / 2;
+    const step = (2 * Math.PI) / ribbonCount;
+    const positions = [];
+
+    for (let i = 0; i < ribbonCount; i++) {
+      const point = pointFromCenterAngle(a, b, startAngle + i * step);
+      positions.push(perimeterDistanceFromPoint(a, b, point.x, point.y));
+    }
+
+    return positions;
+  }
+
   const P = perimeterLength(a, b);
   const spacing = P / ribbonCount;
   const start = a / 2;
+  const positions = [];
+
+  for (let i = 0; i < ribbonCount; i++) {
+    positions.push(start + i * spacing);
+  }
+
+  return positions;
+}
+
+function calculateRibbons({
+  a,
+  b,
+  hWall,
+  hRise,
+  ribbonCount,
+  sagRatio,
+  spacingMode = "distance",
+}) {
+  const P = perimeterLength(a, b);
+  const spacing = spacingMode === "distance" ? P / ribbonCount : null;
+  const angularStepDeg = spacingMode === "degree" ? 360 / ribbonCount : null;
+  const positions = calculateRibbonPositions(a, b, ribbonCount, spacingMode);
   const ribbons = [];
 
   for (let i = 0; i < ribbonCount; i++) {
-    const t = start + i * spacing;
+    const t = positions[i];
     const point = pointOnPerimeter(a, b, t);
     const straight = straightSpan(a, b, hRise, point.x, point.y);
     const length = ribbonLength(straight, sagRatio);
@@ -83,6 +161,8 @@ function calculateRibbons({ a, b, hWall, hRise, ribbonCount, sagRatio }) {
     ribbons,
     perimeter: P,
     spacing,
+    angularStepDeg,
+    spacingMode,
     totalLength,
     ridgeAlongA: ridgeAlongA(a, b),
     peak: { x: a / 2, y: b / 2, z: hWall + hRise },
@@ -111,8 +191,11 @@ function validateInputs({ a, b, hWall, hRise, ribbonCount }) {
 
 export {
   SIDE_LABELS,
+  calculateRibbonPositions,
   calculateRibbons,
+  perimeterDistanceFromPoint,
   perimeterLength,
+  pointFromCenterAngle,
   pointOnPerimeter,
   ridgeAlongA,
   ribbonLength,

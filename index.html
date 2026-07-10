@@ -43,6 +43,14 @@
         </div>
 
         <div class="control-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="equalDegreeSpacing">
+            Equal angular spacing (from roof center)
+          </label>
+          <p class="hint">Off: equal distance along wall top. On: equal angle around roof center.</p>
+        </div>
+
+        <div class="control-group">
           <div class="control-label">
             <label for="sagRatio">Sag ratio (visual drape)</label>
             <span id="sagRatioValue" class="value-readout" aria-live="polite">5%</span>
@@ -72,7 +80,7 @@
           <dd id="summaryPerimeter">—</dd>
         </div>
         <div class="summary-item">
-          <dt>Spacing along wall top</dt>
+          <dt id="summarySpacingLabel">Spacing along wall top</dt>
           <dd id="summarySpacing">—</dd>
         </div>
         <div class="summary-item highlight">
