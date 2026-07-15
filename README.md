@@ -8,13 +8,26 @@ Static interactive map of historic buildings in **Mahilioŭ (Магілёў)**, 
 
 Live (after Pages is enabled): `https://colorage.github.io/kropki_web/`
 
+## Create the GitHub repo
+
+This project is meant to live at **`colorage/kropki_web`**. If you only have this branch on another repository, publish it with:
+
+```bash
+gh repo create colorage/kropki_web --public --source=. --remote=origin --push
+# or, from an existing clone of this branch:
+git remote add kropki https://github.com/colorage/kropki_web.git
+git push -u kropki HEAD:main
+```
+
+Then enable **Settings → Pages → Source: GitHub Actions**.
+
 ## Develop
 
 ```bash
 npm install
-npm run bootstrap   # OSM fallback if Notion export is not present
-# or:
-NOTION_DIR=/path/to/notion npm run import
+NOTION_DIR=~/Downloads/notion npm run import   # preferred
+# or, if Notion export is missing:
+npm run bootstrap
 npm run dev
 ```
 
@@ -34,11 +47,11 @@ This writes:
 - `public/data/icons.json`
 - compressed images under `public/media/`
 
+The cloud build may ship with an OSM bootstrap + a tiny Notion sample so the map is not empty. Re-run the import locally with your full `~/Downloads/notion` export to replace it with all ~180 buildings, photos, and descriptions.
+
 ## Deploy
 
 Push to `main`. GitHub Actions builds with Vite `base: '/kropki_web/'` and deploys to GitHub Pages.
-
-In the repo settings, set Pages source to **GitHub Actions**.
 
 ## UI improvements vs the old CRA app
 
